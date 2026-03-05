@@ -399,7 +399,7 @@
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
 
       try {
-        const r = await fetch(`/api/admin?id=${encodeURIComponent(id)}`, {
+        const r = await fetch(`/api/admin?sessionId=${encodeURIComponent(id)}`, {
           method: "DELETE",
           headers: { Authorization: "Basic " + AUTH }
         });
