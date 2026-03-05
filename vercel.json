@@ -6,6 +6,10 @@
       "use": "@vercel/node"
     },
     {
+      "src": "api/admin.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "public/**",
       "use": "@vercel/static"
     }
@@ -14,6 +18,14 @@
     {
       "src": "/api/sessions",
       "dest": "/api/sessions.js"
+    },
+    {
+      "src": "/api/admin",
+      "dest": "/api/admin.js"
+    },
+    {
+      "src": "/admin",
+      "dest": "/public/admin.html"
     },
     {
       "src": "/(.*)",
