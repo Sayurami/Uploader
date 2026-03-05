@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sayura MD — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    :root {
+      --purple: #b94fff;
+      --pink:   #ff2d78;
+      --blue:   #00c8ff;
+      --red:    #ff3b3b;
+      --green:  #00e87a;
+      --bg:     #07070f;
+      --card:   rgba(15,10,30,0.9);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: 'Rajdhani', sans-serif;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Grid bg */
+    body::after {
+      content:'';
+      position: fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(185,79,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(185,79,255,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+      animation: grid 8s linear infinite;
+    }
+    @keyframes grid { to { transform: translateY(40px); } }
+
+    .orb {
+      position: fixed; border-radius:50%;
+      filter: blur(90px); opacity:.2; z-index:0;
+    }
+    .o1 { width:280px;height:280px;background:var(--purple);top:-80px;left:-80px;animation:fl 7s ease-in-out infinite; }
+    .o2 { width:200px;height:200px;background:var(--pink);bottom:-60px;right:-60px;animation:fl 6s ease-in-out infinite 3s; }
+    @keyframes fl { 0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)} }
+
+    /* ── LOGIN SCREEN ── */
+    #login-screen {
+      position: relative; z-index:10;
+      width: 360px;
+      background: var(--card);
+      border: 1px solid rgba(185,79,255,.3);
+      border-radius: 24px;
+      padding: 40px 36px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 0 60px rgba(185,79,255,.15);
+      animation: cardIn .6s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes cardIn {
+      from{opacity:0;transform:translateY(20px) scale(.97)}
+      to{opacity:1;transform:none}
+    }
+    #login-screen::before {
+      content:'';
+      position:absolute; top:0; left:20%; right:20%; height:2px;
+      background: linear-gradient(90deg,transparent,var(--purple),var(--pink),transparent);
+      border-radius:2px;
+    }
+
+    .logo {
+      display:flex; align-items:center; gap:12px; margin-bottom:28px;
+    }
+    .logo-icon {
+      width:44px; height:44px;
+      background: linear-gradient(135deg,var(--purple),var(--pink));
+      border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px; color:#fff;
+      box-shadow: 0 0 20px rgba(185,79,255,.5);
+    }
+    .logo-title { font-family:'Orbitron',monospace; font-size:13px; font-weight:900; letter-spacing:2px; }
+    .logo-sub   { font-size:10px; color:var(--purple); letter-spacing:3px; }
+
+    .field-label {
+      font-size:10px; letter-spacing:3px; color:rgba(255,255,255,.35);
+      font-family:'Orbitron',monospace; margin-bottom:8px;
+    }
+    .input-wrap { position:relative; margin-bottom:16px; }
+    .input-icon {
+      position:absolute; left:14px; top:50%; transform:translateY(-50%);
+      color:var(--purple); font-size:13px;
+    }
+    input[type=text], input[type=password] {
+      width:100%; padding:13px 14px 13px 40px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(185,79,255,.25);
+      border-radius:12px; color:#fff;
+      font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:600;
+      outline:none; transition:.3s;
+    }
+    input:focus {
+      border-color:var(--purple);
+      background:rgba(185,79,255,.07);
+      box-shadow: 0 0 0 3px rgba(185,79,255,.15);
+    }
+
+    .login-btn {
+      width:100%; padding:14px;
+      background: linear-gradient(135deg,var(--purple),var(--pink));
+      border:none; border-radius:12px; color:#fff;
+      font-family:'Orbitron',monospace; font-size:12px;
+      font-weight:700; letter-spacing:3px; cursor:pointer;
+      box-shadow:0 4px 24px rgba(185,79,255,.4);
+      transition:.3s; position:relative; overflow:hidden;
+    }
+    .login-btn::before {
+      content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);
+      transition:left .5s;
+    }
+    .login-btn:hover::before { left:100%; }
+    .login-btn:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(185,79,255,.5); }
+
+    .login-error {
+      color:var(--red); font-size:13px; text-align:center; margin-top:12px;
+      display:none;
+    }
+
+    /* ── ADMIN PANEL ── */
+    #admin-panel {
+      display:none;
+      position:relative; z-index:10;
+      width: min(500px, 95vw);
+    }
+
+    .panel-header {
+      background: var(--card);
+      border:1px solid rgba(185,79,255,.3);
+      border-radius:20px 20px 0 0;
+      padding:24px 28px 20px;
+      backdrop-filter:blur(20px);
+      display:flex; align-items:center; justify-content:space-between;
+      border-bottom: 1px solid rgba(185,79,255,.15);
+    }
+    .panel-header::before {
+      content:'';
+      position:absolute; top:0; left:10%; right:10%; height:2px;
+      background:linear-gradient(90deg,transparent,var(--purple),var(--pink),transparent);
+    }
+    .panel-title { font-family:'Orbitron',monospace; font-size:14px; font-weight:900; letter-spacing:2px; }
+    .panel-title span { color:var(--purple); }
+
+    .logout-btn {
+      padding:7px 16px;
+      background:rgba(255,45,120,.12);
+      border:1px solid rgba(255,45,120,.35);
+      border-radius:8px;
+      color:var(--pink);
+      font-family:'Orbitron',monospace;
+      font-size:9px; letter-spacing:2px; cursor:pointer;
+      transition:.2s;
+    }
+    .logout-btn:hover { background:rgba(255,45,120,.25); }
+
+    .sessions-wrap {
+      background: var(--card);
+      border:1px solid rgba(185,79,255,.3);
+      border-top:none;
+      border-radius: 0 0 20px 20px;
+      backdrop-filter:blur(20px);
+      padding:20px 28px 28px;
+      max-height:60vh; overflow-y:auto;
+    }
+    .sessions-wrap::-webkit-scrollbar { width:4px; }
+    .sessions-wrap::-webkit-scrollbar-track { background:transparent; }
+    .sessions-wrap::-webkit-scrollbar-thumb { background:rgba(185,79,255,.4); border-radius:4px; }
+
+    .stats-row {
+      display:flex; align-items:center; gap:10px; margin-bottom:18px;
+    }
+    .count-badge {
+      width:32px; height:32px;
+      background:linear-gradient(135deg,var(--purple),var(--pink));
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Orbitron',monospace; font-size:12px; font-weight:900;
+    }
+    .stats-label { font-size:13px; letter-spacing:2px; color:rgba(255,255,255,.5); }
+    .refresh-btn {
+      margin-left:auto;
+      padding:7px 14px;
+      background:rgba(185,79,255,.1);
+      border:1px solid rgba(185,79,255,.3);
+      border-radius:8px; color:var(--purple);
+      font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px;
+      cursor:pointer; transition:.2s;
+    }
+    .refresh-btn:hover { background:rgba(185,79,255,.25); }
+
+    .session-card {
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(185,79,255,.2);
+      border-radius:14px; padding:16px 18px;
+      margin-bottom:10px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      animation: fadeUp .3s ease both;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none} }
+
+    .session-id {
+      font-family:'Orbitron',monospace;
+      font-size:11px; color:var(--purple); font-weight:700;
+      letter-spacing:1px; word-break:break-all;
+    }
+    .session-time { font-size:11px; color:rgba(255,255,255,.35); margin-top:4px; }
+
+    .del-btn {
+      flex-shrink:0;
+      padding:8px 14px;
+      background:rgba(255,59,59,.12);
+      border:1px solid rgba(255,59,59,.35);
+      border-radius:10px; color:var(--red);
+      font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px;
+      cursor:pointer; transition:.2s;
+      display:flex; align-items:center; gap:6px;
+    }
+    .del-btn:hover { background:rgba(255,59,59,.3); box-shadow:0 0 12px rgba(255,59,59,.3); }
+    .del-btn.deleting { opacity:.5; pointer-events:none; }
+    .del-btn.done {
+      background:rgba(0,232,122,.12); border-color:rgba(0,232,122,.35); color:var(--green);
+    }
+
+    .empty-msg {
+      text-align:center; padding:40px 0;
+      color:rgba(255,255,255,.25); font-size:14px; letter-spacing:2px;
+    }
+    .empty-msg i { display:block; font-size:32px; margin-bottom:10px; opacity:.3; }
+
+    .toast {
+      position:fixed; bottom:24px; right:24px; z-index:100;
+      padding:12px 20px;
+      background:rgba(0,232,122,.15);
+      border:1px solid rgba(0,232,122,.4);
+      border-radius:12px; color:var(--green);
+      font-family:'Orbitron',monospace; font-size:11px; letter-spacing:2px;
+      animation: toastIn .3s ease;
+    }
+    .toast.err { background:rgba(255,59,59,.15); border-color:rgba(255,59,59,.4); color:var(--red); }
+    @keyframes toastIn { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none} }
+
+    @media(max-width:480px){
+      #login-screen { width:92vw; padding:30px 22px; }
+      .panel-header, .sessions-wrap { padding-left:18px; padding-right:18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb o1"></div>
+  <div class="orb o2"></div>
+
+  <!-- ── LOGIN ── -->
+  <div id="login-screen">
+    <div class="logo">
+      <div class="logo-icon"><i class="fas fa-shield-alt"></i></div>
+      <div>
+        <div class="logo-title">ADMIN PANEL</div>
+        <div class="logo-sub">Sayura MD &nbsp;·&nbsp; Restricted</div>
+      </div>
+    </div>
+
+    <div class="field-label">Username</div>
+    <div class="input-wrap">
+      <span class="input-icon"><i class="fas fa-user"></i></span>
+      <input type="text" id="u" placeholder="Admin username" autocomplete="username">
+    </div>
+
+    <div class="field-label">Password</div>
+    <div class="input-wrap">
+      <span class="input-icon"><i class="fas fa-lock"></i></span>
+      <input type="password" id="p" placeholder="••••••••••" autocomplete="current-password">
+    </div>
+
+    <button class="login-btn" onclick="doLogin()">
+      <i class="fas fa-sign-in-alt" style="margin-right:8px;font-size:11px"></i>ACCESS PANEL
+    </button>
+    <div class="login-error" id="login-err">
+      <i class="fas fa-exclamation-circle"></i> Invalid credentials
+    </div>
+  </div>
+
+  <!-- ── ADMIN PANEL ── -->
+  <div id="admin-panel">
+    <div class="panel-header" style="position:relative">
+      <div>
+        <div class="panel-title"><span>ADMIN</span> — Sessions</div>
+      </div>
+      <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> LOGOUT
+      </button>
+    </div>
+    <div class="sessions-wrap">
+      <div class="stats-row">
+        <div class="count-badge" id="count">0</div>
+        <div class="stats-label">ACTIVE SESSIONS</div>
+        <button class="refresh-btn" onclick="loadSessions()">
+          <i class="fas fa-sync-alt"></i> REFRESH
+        </button>
+      </div>
+      <div id="session-list">
+        <div class="empty-msg"><i class="fas fa-database"></i>Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let AUTH = "";   // base64(user:pass) — set on login
+
+    /* ── LOGIN ── */
+    function doLogin() {
+      const u = document.getElementById("u").value.trim();
+      const p = document.getElementById("p").value;
+      if (!u || !p) return;
+
+      AUTH = btoa(`${u}:${p}`);
+
+      fetch("/api/admin", {
+        headers: { Authorization: "Basic " + AUTH }
+      }).then(r => {
+        if (r.status === 401) throw new Error("bad");
+        return r.json();
+      }).then(() => {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("admin-panel").style.display  = "block";
+        loadSessions();
+      }).catch(() => {
+        AUTH = "";
+        const err = document.getElementById("login-err");
+        err.style.display = "block";
+        setTimeout(() => err.style.display = "none", 3000);
+      });
+    }
+
+    /* Enter key on password */
+    document.getElementById("p").addEventListener("keydown", e => {
+      if (e.key === "Enter") doLogin();
+    });
+
+    /* ── LOGOUT ── */
+    function logout() {
+      AUTH = "";
+      document.getElementById("admin-panel").style.display  = "none";
+      document.getElementById("login-screen").style.display = "block";
+      document.getElementById("u").value = "";
+      document.getElementById("p").value = "";
+    }
+
+    /* ── LOAD SESSIONS ── */
+    async function loadSessions() {
+      const list = document.getElementById("session-list");
+      list.innerHTML = '<div class="empty-msg"><i class="fas fa-spinner fa-spin"></i>Loading...</div>';
+
+      try {
+        const r = await fetch("/api/admin", { headers:{ Authorization:"Basic "+AUTH } });
+        const data = await r.json();
+        const sessions = data.sessions || [];
+        document.getElementById("count").textContent = sessions.length;
+
+        if (sessions.length === 0) {
+          list.innerHTML = '<div class="empty-msg"><i class="fas fa-database"></i>No active sessions</div>';
+          return;
+        }
+
+        list.innerHTML = sessions.map((s, i) => `
+          <div class="session-card" style="animation-delay:${i*0.05}s" id="card-${s.sessionId}">
+            <div>
+              <div class="session-id">🔑 ${s.sessionId}</div>
+              <div class="session-time">Updated: ${s.updatedAt ? new Date(s.updatedAt).toLocaleString() : "—"}</div>
+            </div>
+            <button class="del-btn" id="del-${s.sessionId}" onclick="deleteSession('${s.sessionId}')">
+              <i class="fas fa-trash"></i> DELETE
+            </button>
+          </div>
+        `).join("");
+      } catch(e) {
+        list.innerHTML = '<div class="empty-msg"><i class="fas fa-exclamation-triangle"></i>Error loading sessions</div>';
+      }
+    }
+
+    /* ── DELETE SESSION ── */
+    async function deleteSession(id) {
+      const btn  = document.getElementById("del-" + id);
+      const card = document.getElementById("card-" + id);
+      btn.classList.add("deleting");
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+
+      try {
+        const r = await fetch(`/api/admin?id=${encodeURIComponent(id)}`, {
+          method: "DELETE",
+          headers: { Authorization: "Basic " + AUTH }
+        });
+        if (!r.ok) throw new Error();
+
+        btn.classList.remove("deleting");
+        btn.classList.add("done");
+        btn.innerHTML = '<i class="fas fa-check"></i> DELETED';
+
+        setTimeout(() => {
+          card.style.transition = "opacity .4s, transform .4s";
+          card.style.opacity = "0";
+          card.style.transform = "translateX(20px)";
+          setTimeout(() => { card.remove(); updateCount(); }, 400);
+        }, 600);
+
+        showToast("Session deleted: " + id);
+      } catch(e) {
+        btn.classList.remove("deleting");
+        btn.innerHTML = '<i class="fas fa-trash"></i> DELETE';
+        showToast("Delete failed!", true);
+      }
+    }
+
+    function updateCount() {
+      document.getElementById("count").textContent =
+        document.querySelectorAll(".session-card").length;
+    }
+
+    /* ── TOAST ── */
+    function showToast(msg, err=false) {
+      const t = document.createElement("div");
+      t.className = "toast" + (err ? " err" : "");
+      t.innerHTML = (err ? "❌ " : "✅ ") + msg;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity="0"; t.style.transition="opacity .4s"; setTimeout(()=>t.remove(),400); }, 3000);
+    }
+  </script>
+</body>
+</html>
