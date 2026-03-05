@@ -158,14 +158,6 @@
   }
   .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-  .btn-danger {
-    background: rgba(239,68,68,0.15);
-    color: #f87171;
-    border: 1px solid rgba(239,68,68,0.3);
-    padding: 6px 14px;
-    font-size: 0.8rem;
-  }
-  .btn-danger:hover { background: rgba(239,68,68,0.25); }
 
   /* ── Sessions List ── */
   .sessions-grid {
@@ -335,7 +327,6 @@ async function loadSessions() {
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <span class="session-badge">● Active</span>
-          <button class="btn btn-danger" onclick="deleteSession('${s.sessionId}')">🗑 Delete</button>
         </div>
       </div>
     `).join('');
@@ -383,20 +374,6 @@ async function uploadCreds(credsJson = null, customId = null) {
   }
 }
 
-// ── Delete Session ──
-async function deleteSession(sessionId) {
-  if (!confirm(`Delete session: ${sessionId}?`)) return;
-  try {
-    const res = await fetch(`${API}?sessionId=${sessionId}`, { method: 'DELETE' });
-    const data = await res.json();
-    if (data.success) {
-      showToast(`🗑 Deleted: ${sessionId}`, 'success');
-      document.getElementById(`session-${sessionId}`)?.remove();
-      loadSessions();
-    }
-  } catch { showToast('Delete failed', 'error'); }
-}
-
 // ── File Drop / Select ──
 const dropArea = document.getElementById('dropArea');
 const fileInput = document.getElementById('fileInput');
@@ -413,13 +390,10 @@ fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
 async function handleFiles(files) {
   if (!files || files.length === 0) return;
-
-  // Multiple files support
   for (const file of files) {
     try {
       const text = await file.text();
       const json = JSON.parse(text);
-      // File name ගෙන session id හදනවා (creds.json → auto id)
       const customId = files.length === 1
         ? document.getElementById('sessionIdInput').value.trim() || null
         : null;
