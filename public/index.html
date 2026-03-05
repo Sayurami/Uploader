@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sayura MD - Session Manager</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #0a0a0f;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', sans-serif;
+    background-image: radial-gradient(ellipse at 20% 50%, #1a0533 0%, transparent 50%),
+                      radial-gradient(ellipse at 80% 20%, #0d1f3c 0%, transparent 50%);
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    padding: 40px 20px 20px;
+  }
+  .header .logo {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header p {
+    color: #64748b;
+    margin-top: 8px;
+    font-size: 0.95rem;
+  }
+
+  /* ── Container ── */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+  }
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #a855f7;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Upload Area ── */
+  .upload-area {
+    border: 2px dashed rgba(168,85,247,0.4);
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .upload-area:hover, .upload-area.drag-over {
+    border-color: #a855f7;
+    background: rgba(168,85,247,0.08);
+  }
+  .upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .upload-area p { color: #94a3b8; font-size: 0.9rem; }
+  .upload-area strong { color: #a855f7; }
+
+  /* ── OR divider ── */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+    color: #475569;
+    font-size: 0.85rem;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  /* ── Textarea ── */
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 14px;
+    color: #e2e8f0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.82rem;
+    resize: vertical;
+    outline: none;
+    transition: border 0.2s;
+  }
+  textarea:focus { border-color: #a855f7; }
+
+  /* ── Input ── */
+  input[type="text"] {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border 0.2s;
+    margin-top: 12px;
+  }
+  input[type="text"]:focus { border-color: #a855f7; }
+  input[type="text"]::placeholder { color: #475569; }
+
+  /* ── Button ── */
+  .btn {
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
+    color: white;
+    width: 100%;
+    justify-content: center;
+    margin-top: 16px;
+  }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-danger {
+    background: rgba(239,68,68,0.15);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,0.3);
+    padding: 6px 14px;
+    font-size: 0.8rem;
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
+
+  /* ── Sessions List ── */
+  .sessions-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .session-item {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .session-id {
+    font-family: 'Courier New', monospace;
+    font-size: 0.88rem;
+    color: #a855f7;
+    font-weight: 600;
+  }
+  .session-date {
+    font-size: 0.75rem;
+    color: #475569;
+    margin-top: 3px;
+  }
+  .session-badge {
+    background: rgba(34,197,94,0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 320px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: #14532d; border: 1px solid #16a34a; color: #4ade80; }
+  .toast.error { background: #450a0a; border: 1px solid #dc2626; color: #f87171; }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center;
+    padding: 30px;
+    color: #475569;
+  }
+  .empty .e-icon { font-size: 2.5rem; margin-bottom: 8px; }
+
+  /* ── Count badge ── */
+  .count-badge {
+    background: rgba(168,85,247,0.2);
+    color: #a855f7;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-left: 8px;
+  }
+
+  .label {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-bottom: 6px;
+    margin-top: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🤖 Sayura MD</div>
+  <p>Session Manager — Upload creds.json to MongoDB</p>
+</div>
+
+<div class="container">
+
+  <!-- Upload Card -->
+  <div class="card">
+    <div class="card-title">⬆️ Upload creds.json</div>
+
+    <!-- File Drop -->
+    <div class="upload-area" id="dropArea">
+      <input type="file" accept=".json,application/json" id="fileInput" multiple/>
+      <div class="upload-icon">📂</div>
+      <p><strong>Click to browse</strong> or drag & drop</p>
+      <p style="margin-top:6px">creds.json files (multiple OK)</p>
+    </div>
+
+    <div class="divider">OR paste JSON below</div>
+
+    <div class="label">Paste creds.json content</div>
+    <textarea id="credsTextarea" placeholder='{"noiseKey": {...}, "signedIdentityKey": {...}, ...}'></textarea>
+
+    <div class="label">Custom Session ID (optional — auto-generated if empty)</div>
+    <input type="text" id="sessionIdInput" placeholder="e.g. SAYURA-MYBOT001"/>
+
+    <button class="btn btn-primary" id="uploadBtn" onclick="uploadCreds()">
+      ⬆️ Upload to MongoDB
+    </button>
+  </div>
+
+  <!-- Sessions List Card -->
+  <div class="card">
+    <div class="card-title">
+      📋 Active Sessions
+      <span class="count-badge" id="countBadge">0</span>
+      <button class="btn" style="margin-left:auto;background:rgba(255,255,255,0.05);color:#94a3b8;padding:6px 14px;font-size:0.8rem;" onclick="loadSessions()">🔄 Refresh</button>
+    </div>
+    <div class="sessions-grid" id="sessionsList">
+      <div class="empty"><div class="e-icon">⏳</div>Loading sessions...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/sessions';
+
+// ── Toast ──
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Load Sessions ──
+async function loadSessions() {
+  try {
+    const res = await fetch(API);
+    const data = await res.json();
+    const list = document.getElementById('sessionsList');
+    const badge = document.getElementById('countBadge');
+
+    if (!data.sessions || data.sessions.length === 0) {
+      list.innerHTML = '<div class="empty"><div class="e-icon">📭</div>No sessions yet. Upload your first creds.json!</div>';
+      badge.textContent = '0';
+      return;
+    }
+
+    badge.textContent = data.sessions.length;
+    list.innerHTML = data.sessions.map(s => `
+      <div class="session-item" id="session-${s.sessionId}">
+        <div>
+          <div class="session-id">🔑 ${s.sessionId}</div>
+          <div class="session-date">Updated: ${new Date(s.updatedAt).toLocaleString()}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="session-badge">● Active</span>
+          <button class="btn btn-danger" onclick="deleteSession('${s.sessionId}')">🗑 Delete</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    showToast('Failed to load sessions', 'error');
+  }
+}
+
+// ── Upload Creds ──
+async function uploadCreds(credsJson = null, customId = null) {
+  const btn = document.getElementById('uploadBtn');
+
+  if (!credsJson) {
+    const raw = document.getElementById('credsTextarea').value.trim();
+    if (!raw) { showToast('Please paste creds.json content or select a file', 'error'); return; }
+    try { credsJson = JSON.parse(raw); } catch { showToast('Invalid JSON format!', 'error'); return; }
+  }
+
+  const sessionId = customId || document.getElementById('sessionIdInput').value.trim() || null;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Uploading...';
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credsJson, sessionId })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showToast(`✅ Uploaded! Session ID: ${data.sessionId}`, 'success');
+      document.getElementById('credsTextarea').value = '';
+      document.getElementById('sessionIdInput').value = '';
+      loadSessions();
+    } else {
+      showToast(`❌ ${data.error}`, 'error');
+    }
+  } catch (err) {
+    showToast('Upload failed. Check connection.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬆️ Upload to MongoDB';
+  }
+}
+
+// ── Delete Session ──
+async function deleteSession(sessionId) {
+  if (!confirm(`Delete session: ${sessionId}?`)) return;
+  try {
+    const res = await fetch(`${API}?sessionId=${sessionId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`🗑 Deleted: ${sessionId}`, 'success');
+      document.getElementById(`session-${sessionId}`)?.remove();
+      loadSessions();
+    }
+  } catch { showToast('Delete failed', 'error'); }
+}
+
+// ── File Drop / Select ──
+const dropArea = document.getElementById('dropArea');
+const fileInput = document.getElementById('fileInput');
+
+dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('drag-over'); });
+dropArea.addEventListener('dragleave', () => dropArea.classList.remove('drag-over'));
+dropArea.addEventListener('drop', e => {
+  e.preventDefault();
+  dropArea.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+async function handleFiles(files) {
+  if (!files || files.length === 0) return;
+
+  // Multiple files support
+  for (const file of files) {
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      // File name ගෙන session id හදනවා (creds.json → auto id)
+      const customId = files.length === 1
+        ? document.getElementById('sessionIdInput').value.trim() || null
+        : null;
+      await uploadCreds(json, customId);
+    } catch {
+      showToast(`❌ Invalid JSON in file: ${file.name}`, 'error');
+    }
+  }
+}
+
+// ── Init ──
+loadSessions();
+</script>
+</body>
+</html>
