@@ -1,3 +1,255 @@
+
+
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Nexus pair site</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> <style> body {
+
+pasted
+
+මෙක ටිකක් ලස්සන කරල්ලා දියම් path venas karanna epa
+
+5 Mar
+
+Viewed a file, created a file, read a file
+Viewed a file, created a file, read a file
+මෙන්න ඔබේ redesigned pair site! 🎬
+
+කළ changes:
+
+Cyberpunk / neon aesthetic — purple + pink gradient theme
+Orbitron font — cinematic, futuristic feel
+Glass card with glowing border, animated grid background, floating orbs
+Clean input with phone icon, focus glow effect
+Animated PAIR NOW button with shimmer hover effect
+Code box — styled display with copy button that turns green on copy
+Loading spinner while waiting for response
+Path names හෝ API endpoints කිසිවක් වෙනස් කළේ නැහැ — /code?number= same as before ✅
+Pair site
+Code · HTML 
+Screenshot_20260305_214904_Kiwi Browser.jpg
+https://github.com/Sayurami/Uploader  මෙක හොදට බල ඉස්සොරම  ඉට පස්සේ මට ඔනි  සිසන් delete karanna adminta venama pituvak ekata venama user name and password  user name =sayura 
+Password =G@laXy2045! Eka meka
+
+5 Mar
+
+Searched the web
+Searched the web
+GitHub raw files fetch කරන්න network block වෙනවා. නමුත් screenshot එකෙන් හා site structure එකෙන් හොදට තේරෙනවා.
+
+දැන් admin page හදනවා — sessions delete කරන්න admin username/password protect කරලා, main uploader page ට වෙනම /admin route එකක්.
+
+ඔබේ project structure බලන කොට API files /api/ folder එකේ. Admin page හදන්නේ:
+
+/public/admin.html — password protected delete UI
+/api/admin.js — delete + auth API
+
+Searched the web
+Searched the web
+Raw content fetch කරන්න බැරි නිසා, ඔබේ site screenshot + live site structure බලලා files හදනවා. Sessions API pattern same ව තබාගෙන admin files හදනවා:
+
+
+Created 2 files, read a file
+Created 2 files, read a file
+Files දෙකක් හදලා දුන්නා:
+
+📁 ඔබේ Project එකට Add කරන්නේ මෙහෙමයි:
+public/admin.html → ඔබේ public/ folder එකට copy කරන්න api/admin.js → ඔබේ api/ folder එකට copy කරන්න
+
+⚙️ Vercel Environment Variables Add කරන්න
+Vercel dashboard → Settings → Environment Variables:
+
+ADMIN_USER = sayura
+ADMIN_PASS = G@laXy2045!
+(code එකේ hardcode කරලත් තිබේ, env vars use කළොත් ආරක්ෂිතයි)
+
+🌐 Access කරන්නේ:
+https://uploader-five-dun.vercel.app/admin.html
+Login කළාට පස්සේ sessions list වෙනවා, DELETE button එකෙන් ඕනෑ session එකක් delete කරන්න පුළුවන්. Main uploader page users ට කිසිම දෙයක් change වෙන්නේ නෑ. ✅
+
+Admin
+Code · HTML 
+Admin
+JS 
+const mongoose = require("mongoose");
+// මේක API එකේ (Uploader කේතයේ) වෙනස් කරන්න
+const MONGO_URI = "mongodb+srv://sayuaradark_db_user:qK3BV8XVv2JJJD5a@cluster0.w8wb15r.mongodb.net/Sayura_DB?retryWrites=true&w=majority&appName=Cluster0";
+// ================= MongoDB Schema =================
+const credsSchema = new mongoose.Schema({
+  sessionId: { type: String, required: true, unique: true },
+  credsJson: { type: Object, required: true },
+  updatedAt: { type: Date, default: Date.now }
+});
+let CredsModel;
+try {
+  CredsModel = mongoose.model("SayuraMDCreds");
+} catch {
+  CredsModel = mongoose.model("SayuraMDCreds", credsSchema);
+}
+// MongoDB connect
+let isConnected = false;
+async function connectDB() {
+  if (isConnected) return;
+  await mongoose.connect(MONGO_URI);
+  isConnected = true;
+}
+// Session ID generate
+function generateSessionId() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let id = "SAYURA-";
+  for (let i = 0; i < 12; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return id;
+}
+// ================= Main Handler =================
+module.exports = async (req, res) => {
+  // CORS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.status(200).end();
+  try {
+    await connectDB();
+    // ─── GET: සියලු sessions list ───
+    if (req.method === "GET" && !req.query.action) {
+      const sessions = await CredsModel.find({}, "sessionId updatedAt");
+      return res.json({ success: true, sessions });
+    }
+    // ─── POST: නව session upload ───
+    if (req.method === "POST") {
+      const { credsJson, sessionId: customId } = req.body;
+      if (!credsJson) {
+        return res.status(400).json({ success: false, error: "credsJson is required" });
+      }
+      // creds.json valid දැයි check
+      let parsedCreds;
+      try {
+        parsedCreds = typeof credsJson === "string" ? JSON.parse(credsJson) : credsJson;
+        if (!parsedCreds.noiseKey && !parsedCreds.me && !parsedCreds.signedIdentityKey) {
+          return res.status(400).json({ success: false, error: "Invalid creds.json format" });
+        }
+      } catch (e) {
+        return res.status(400).json({ success: false, error: "Invalid JSON format" });
+      }
+      const sessionId = customId || generateSessionId();
+      await CredsModel.findOneAndUpdate(
+        { sessionId },
+        { sessionId, credsJson: parsedCreds, updatedAt: new Date() },
+        { upsert: true, new: true }
+      );
+      return res.json({ success: true, sessionId, message: "Session uploaded successfully!" });
+    }
+    // ─── DELETE: session delete ───
+    if (req.method === "DELETE") {
+      const { sessionId } = req.query;
+      if (!sessionId) {
+        return res.status(400).json({ success: false, error: "sessionId required" });
+      }
+      await CredsModel.deleteOne({ sessionId });
+      return res.json({ success: true, message: Session ${sessionId} deleted });
+    }
+    return res.status(405).json({ error: "Method not allowed" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+Show more
+5 Mar
+දැන් exact code structure දෙකත් දෙකම clear. admin.js ඔබේ existing MongoDB setup use කරෙන විදිහට rewrite කරනවා.
+
+
+Created a file, edited a file, ran a command
+Created a file, edited a file, ran a command
+දැන් admin.html එකත් update කරනවා — DELETE query param sessionId ලෙස match කරන්න (ඔබේ existing upload.js pattern එකම):
+
+
+Ran a command, read a file
+Ran a command, read a file
+දැන් ඔබේ exact code pattern එකට හරියටම match වෙනවා! 🎯
+
+📂 GitHub එකට දාන්නේ මෙහෙමයි:
+File	Path
+admin.js	api/admin.js
+admin.html	public/admin.html
+✅ Key Changes (ඔබේ code සමග match):
+Same mongoose + MONGO_URI — exact same connection
+Same CredsModel + credsSchema — conflict නෑ
+Same isConnected pattern — same DB connection reuse
+DELETE uses ?sessionId= — ඔබේ existing upload.js DELETE pattern එකම
+🌐 Access:
+https://uploader-five-dun.vercel.app/admin.html
+Username: sayura | Password: G@laXy2045! 🔐
+
+Admin
+JS 
+Admin
+Code · HTML 
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/sessions.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/sessions",
+      "dest": "/api/sessions.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/index.html"
+    }
+  ]
+} update
+
+Show more
+5 Mar
+admin.js route add කරන්න vercel.json update:
+
+
+Created a file, read a file
+Created a file, read a file
+Add කළේ මේවා:
+
+api/admin.js → build list එකට
+/api/admin → admin API route
+/admin → admin HTML page (clean URL — .html extension නෑ)
+දැන් https://uploader-five-dun.vercel.app/admin කියලා access කරන්න පුළුවන් ✅
+
+Vercel
+Code · JSON 
+
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"/> <meta name="viewport" content="width=device-width, initial-scale=1.0"/> <title>Sayura MD - Session Manager</title> <style> * { margin: 0; padding: 0; box-sizing: border-box; } body { min-height: 100vh; background: #0a0a0f;
+
+pasted
+
+Editing this message will create a new conversation branch. You can switch between branches using the arrow navigation buttons.
+Delete button ඉවත් කරලා දෙනවා — admin page ම delete කරන්නේ:
+
+
+Ran 3 commands, read a file
+Ran 3 commands, read a file
+හරි! Delete button සහ btn-danger CSS class දෙකම ඉවත් කළා.
+
+දැන් main page එකේ sessions view only — delete කරන්න නම් /admin page ම යන්න ඕනේ. ✅
+
+Index
+Code · HTML 
+
+
+
+
+
+Claude is AI and can make mistakes. Please double-check responses.
+Pasted content
+11.76 KB •437 lines
+Formatting may be inconsistent from source
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -158,6 +410,14 @@
   }
   .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-danger {
+    background: rgba(239,68,68,0.15);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,0.3);
+    padding: 6px 14px;
+    font-size: 0.8rem;
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
 
   /* ── Sessions List ── */
   .sessions-grid {
@@ -327,6 +587,7 @@ async function loadSessions() {
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <span class="session-badge">● Active</span>
+          <button class="btn btn-danger" onclick="deleteSession('${s.sessionId}')">🗑 Delete</button>
         </div>
       </div>
     `).join('');
@@ -374,6 +635,20 @@ async function uploadCreds(credsJson = null, customId = null) {
   }
 }
 
+// ── Delete Session ──
+async function deleteSession(sessionId) {
+  if (!confirm(`Delete session: ${sessionId}?`)) return;
+  try {
+    const res = await fetch(`${API}?sessionId=${sessionId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`🗑 Deleted: ${sessionId}`, 'success');
+      document.getElementById(`session-${sessionId}`)?.remove();
+      loadSessions();
+    }
+  } catch { showToast('Delete failed', 'error'); }
+}
+
 // ── File Drop / Select ──
 const dropArea = document.getElementById('dropArea');
 const fileInput = document.getElementById('fileInput');
@@ -390,10 +665,13 @@ fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
 async function handleFiles(files) {
   if (!files || files.length === 0) return;
+
+  // Multiple files support
   for (const file of files) {
     try {
       const text = await file.text();
       const json = JSON.parse(text);
+      // File name ගෙන session id හදනවා (creds.json → auto id)
       const customId = files.length === 1
         ? document.getElementById('sessionIdInput').value.trim() || null
         : null;
