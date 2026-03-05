@@ -1,0 +1,9 @@
+{
+  "name": "sayura-md-session-manager",
+  "version": "1.0.0",
+  "description": "Sayura MD Session Manager",
+  "main": "api/sessions.js",
+  "dependencies": {
+    "mongoose": "^8.0.0"
+  }
+}
