@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const MONGO_URI = "mongodb+srv://sayuaradark_db_user:password@cluster0.w8wb15r.mongodb.net/MyBotDB?retryWrites=true&w=majority&appName=Cluster0";
+const MONGO_URI = "mongodb+srv://sayuaradark_db_user:qK3BV8XVv2JJJD5a@cluster0.w8wb15r.mongodb.net/Session?retryWrites=true&w=majority&appName=Cluster0";
 // ================= MongoDB Schema =================
 const credsSchema = new mongoose.Schema({
   sessionId: { type: String, required: true, unique: true },
